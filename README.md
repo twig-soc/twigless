@@ -1,5 +1,6 @@
 # twigless
 An opensourced reanimation for roblox. Instead of using hats, it uses dead npcs to reanimate.
+R6 Recommended. (R15 still works but has issues)
 (THIS USES NO HATS)
 
 # HOW TO USE
