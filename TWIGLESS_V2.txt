@@ -1,0 +1,135 @@
+--[[
+Run this in command bar if your using studio
+Run it in your executor if its lvl 3+
+game.Players.LocalPlayer.SimulationRadius=500
+
+Credits to TWIGKID for making the reanimate, and Chip for playtesting it
+
+HOW TO USE:
+Step 1: Run the SimulationRadius CMD
+Step 2: Kill an dummy/npc
+Step 3: Run the script, or if its already enabled in studio, then it'll be fine
+]]
+
+--UNCOMMENT IF YOUR USING STUDIO
+--wait( 3 )
+
+local permadeath_enabled = false
+
+local gm, ws = game, workspace
+local pr = pairs
+
+local player = gm:FindService("Players").LocalPlayer
+local character = player.Character
+local hum = character:FindFirstChildOfClass("Humanoid")
+local mouse = player:GetMouse()
+local camera = ws.CurrentCamera
+local cf, angles, rad, sin, cl, v3 = CFrame.new, CFrame.Angles, math.rad, math.sin, os.clock, Vector3.new
+local cf_0 = cf(0,0,0)
+
+character.Archivable = true
+
+local rs = gm:FindService("RunService")
+local fakerig = character:Clone()
+local fake_hum = fakerig:FindFirstChildOfClass("Humanoid")
+local root, froot = hum.RootPart, fake_hum.RootPart
+
+fakerig.Archivable = false
+
+fakerig.Parent = ws
+fakerig.Name = "fake_Rig"
+
+local function conf(part:BasePart)
+	part.CanCollide=false
+	part.CanTouch=false
+	part.CanQuery=false
+end
+
+local function Animate(Basepart: BasePart)
+	if Basepart.ReceiveAge == 0 then
+		local limb = fakerig:FindFirstChild(Basepart.Name)
+		if limb then
+			conf(Basepart)
+
+			Basepart.CFrame = limb.CFrame
+			Basepart.RotVelocity =  v3(sin(cl()*15), sin(cl()*15+1.047), sin(cl()*15+2.094))
+			Basepart.Velocity=v3(0,25.1,0)+limb.Velocity*v3(10,0,10)
+			Basepart.CFrame = limb.CFrame + v3(0.0015*sin(cl()*15), 0.0015*sin(cl()*15+1.047), 0.0015*sin(cl()*15+2.094))
+
+			limb=nil
+		end
+	end
+end
+
+player.Character = fakerig
+camera.CameraSubject = fake_hum
+
+local con=rs.Heartbeat:Connect(function()
+	for i, v in pr(ws:GetDescendants()) do
+		if v:IsA("BasePart") and v.Anchored == false and not v:IsGrounded() and #v:GetConnectedParts() == 1 and not v:IsDescendantOf(character) and not v:IsDescendantOf(fakerig) and v.ReceiveAge == 0 then
+			Animate(v)
+		end
+	end
+
+	root.Velocity = froot.Velocity root.RotVelocity = froot.RotVelocity
+	root.CFrame = froot.CFrame * cf(0, -7, 3)
+
+	for i, v in pr(fakerig:GetDescendants()) do
+		if v:IsA("BasePart") then
+			conf(v)
+		end
+	end
+end)
+
+for i, v in pr(character:GetDescendants()) do
+	if v:IsA("BasePart") then
+		conf(v)
+		v.Transparency=1
+	end
+
+	if v:IsA("Decal") then
+		v.Transparency = 1
+	end
+end
+for i, v in pr(fakerig:GetDescendants()) do
+	if v:IsA("BasePart") then
+		conf(v)
+		v.Transparency=1
+	end
+
+	if v:IsA("Decal") then
+		v.Transparency = 1
+	end
+end
+
+local animate = fakerig["Animate"]:Destroy()
+local animator = Instance.new("Animator", fake_hum)
+local new = character.Animate:Clone()
+new.Parent = fakerig
+
+
+if permadeath_enabled == false then
+	fake_hum.Died:Once(function()
+
+		player.Character = character
+		camera.CameraSubject = hum
+
+		root.Velocity=Vector3.zero
+		root.CFrame = froot.CFrame
+
+		for i, v in pr(character:GetDescendants()) do
+			if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+				conf(v)
+				v.Transparency=0
+			end
+
+			if v:IsA("Decal") then
+				v.Transparency = 0
+			end
+		end
+
+		fakerig:Destroy() fakerig = nil
+		con:Disconnect() con=nil
+
+	end)
+end
